@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 load_dotenv()
 load_dotenv(".env.local")
 
-
 # setup logging to stdout
 import os
 
@@ -67,39 +66,69 @@ class RestfulMongo():
       client = MongoClient()
     self._client = client
     
-    self._prefix = prefix if prefix[0] == "/" else f"/{prefix}"
+    if prefix:
+      if prefix[0] != "/":
+        prefix = f"/{prefix}"
+      self._server.logger.info(f"🚏 using prefix: {prefix}")
+    else:
+      prefix = ""
+    self._prefix = prefix
 
     # a dictionary of RestfulMongo collections
     self._collections = {}
     
-    class RestfulResource(flask_restful.Resource):
-      def get(this, resource, id=None, path=None):
-        self._server.logger.info(f"GET {resource}/{id}")
-        
-        # TODO: pass optional arguments (matching, pageable)
-        # TODO: list all
-        # TODO: apply jsonpointer path
-        # TODO: exception handling
-        # TODO: validation,...
-        
-        obj = self._collections[resource].find_one({"id" : id})
-        if obj:
-          return dataclasses.asdict(obj)
-        return None
-      
-      def post(this, resource, id=None, path=None):
-        pass
-
-      def put(this, resource, id=None, path=None):
-        pass
-
-      def patch(this, resource, id=None, path=None):
-        pass
-
-    self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>",                         endpoint="resources")
-    self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>/<string:id>",             endpoint="resource")
-    self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>/<string:id>/<path:path>", endpoint="resource-path")
+    # generic api mapping first path element to the corresponding resource
+    # optional second to a document identifier
+    # optional remaining path as jsonpointer into the document
+    for endpoint, path in {
+      "resources"     : "",
+      "resource"      : "/<string:id>",
+      "resource-path" : "/<string:id>/<path:path>"
+    }.items():
+      self._api.add_resource(
+        RestfulResource,
+        f"/<string:resource>{self._prefix}{path}",
+        endpoint=endpoint,
+        resource_class_kwargs={ "restful_mongo": self }
+      )
 
   def expose(self, cls):
     collection = DataClassCollection(cls, self._client)
     self._collections[collection._name] = collection
+
+class RestfulResource(flask_restful.Resource):
+  """
+
+  a RESTful Resource is a generic Resource handling
+  
+  """
+  def __init__(self, restful_mongo, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._restful_mongo = restful_mongo
+
+  @property
+  def logger(self):
+    return self._restful_mongo._server.logger
+  
+  def get(self, resource, id=None, path=None):
+    self.logger.info(f"GET {resource}/{id}")
+    
+    # TODO: pass optional arguments (matching, pageable)
+    # TODO: list all
+    # TODO: apply jsonpointer path
+    # TODO: exception handling
+    # TODO: validation,...
+    
+    obj = self._restful_mongo._collections[resource].find_one({"id" : id})
+    if obj:
+      return dataclasses.asdict(obj)
+    return None
+  
+  def post(self, resource, id=None, path=None):
+    pass
+
+  def put(self, resource, id=None, path=None):
+    pass
+
+  def patch(self, resource, id=None, path=None):
+    pass
