@@ -49,7 +49,7 @@ class RestfulMongo():
     class Encoder(json.JSONEncoder):
       def default(self, o):
         if hasattr(o, "to_json"):
-          return obj.to_json()
+          return o.to_json()
         if isinstance(o, datetime):
           return o.isoformat()
         if isinstance(o, set):
