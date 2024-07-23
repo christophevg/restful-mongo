@@ -27,4 +27,4 @@ for doc in [
 server = Flask(__name__)
 
 rest = RestfulMongo(server, client=client)
-rest.handle(MyData)
+rest.expose(MyData)

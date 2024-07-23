@@ -26,7 +26,7 @@ client = MongoClient()
 app = Flask(__name__)
 
 api = RestfulMongo(server, client=client)
-api.handle(MyData)
+api.expose(MyData)
 ```
 
 You get a `MyData` MongoDB collection, `/MyDatas` and `/MyData` RESTful endpoints, to which you can issue POST, GET, PATCH and DELETE methods.

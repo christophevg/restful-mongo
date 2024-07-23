@@ -76,6 +76,6 @@ class RestfulMongo():
     self._api.add_resource(RestfulResource, "/<string:resource>/<string:id>",             endpoint="resource")
     self._api.add_resource(RestfulResource, "/<string:resource>/<string:id>/<path:path>", endpoint="resource-path")
 
-  def handle(self, cls):
+  def expose(self, cls):
     collection = DataClassCollection(cls, self._client)
     self._collections[collection._name] = collection
