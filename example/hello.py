@@ -2,7 +2,13 @@ from dataclasses import dataclass, field
 from typing import List
 
 # quick 'n dirty in-memory mongoclient to avoid having to set up one
-from .fakemongo import MongoClient
+import os
+
+if os.environ.get("USE_REAL_MONGO", False):
+  print("⚠️ using real MongoDB client")
+  from pymongo import MongoClient
+else:
+  from .fakemongo import MongoClient
 
 from flask import Flask
 from restful_mongo import RestfulMongo, RestfulDocument
@@ -15,7 +21,7 @@ class MyData(RestfulDocument):
   others: List["MyData"] = field(default_factory=list)
 
 # prepare a mongo collection
-client = MongoClient()
+client = MongoClient()["hello"]
 for doc in [
   { "id" : "0", "name" : "zero", "others" : []     },
   { "id" : "1", "name" : "one",  "others" : [0]    },

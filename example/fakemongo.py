@@ -5,8 +5,21 @@ import uuid
 
 InsertOneResult = namedtuple("InsertOneResult", "acknowledged inserted_id")
 
-class MongoClient():
+class MongoClient:
   def __init__(self, *args, **kwargs):
+    self._databases = {}
+
+  def __getitem__(self, name):
+    try:
+      return self._databases[name]
+    except KeyError:
+      # create "on the fly"
+      fake_database = FakeMongoDatabase()
+      self._databases[name] = fake_database
+    return fake_database
+
+class FakeMongoDatabase:
+  def __init__(self):
     self._collections = {}
 
   def __getitem__(self, collection):
@@ -20,8 +33,9 @@ class MongoClient():
 
   def __getattr__(self, collection):
     return self[collection]
+  
 
-class FakeMongoCollection():
+class FakeMongoCollection:
   def __init__(self):
     self.documents = []
   

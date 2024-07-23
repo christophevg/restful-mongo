@@ -22,6 +22,11 @@ import dataclasses
 from dataclasses import dataclass
 
 from pymongo import MongoClient
+from bson.objectid import ObjectId
+
+import json
+from datetime import datetime
+
 import flask_restful
 
 from restful_mongo.collection import DataClassCollection
@@ -41,7 +46,24 @@ class RestfulMongo():
     self._server.logger.setLevel(LOG_LEVEL)
     self._api = flask_restful.Api(self._server)
 
-    if not client:
+    class Encoder(json.JSONEncoder):
+      def default(self, o):
+        if hasattr(o, "to_json"):
+          return obj.to_json()
+        if isinstance(o, datetime):
+          return o.isoformat()
+        if isinstance(o, set):
+          return list(o)
+        if isinstance(o, ObjectId):
+          return str(o)
+        return super().default(o)
+
+    self._server.config['RESTFUL_JSON'] =  {
+      "indent" : 2,
+      "cls"    : Encoder
+    }
+
+    if client is None:
       client = MongoClient
     self._client = client
 
