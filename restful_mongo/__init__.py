@@ -64,7 +64,7 @@ class RestfulMongo():
     }
 
     if client is None:
-      client = MongoClient
+      client = MongoClient()
     self._client = client
 
     # a dictionary of RestfulMongo collections
