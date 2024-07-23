@@ -96,7 +96,7 @@ class RestfulMongo():
       def patch(this, resource, id=None, path=None):
         pass
 
-    self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>s",                        endpoint="resources")
+    self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>",                         endpoint="resources")
     self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>/<string:id>",             endpoint="resource")
     self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>/<string:id>/<path:path>", endpoint="resource-path")
 

@@ -29,7 +29,7 @@ api = RestfulMongo(server, client=client)
 api.expose(MyData)
 ```
 
-You get a `MyData` MongoDB collection, `/MyDatas` and `/MyData` RESTful endpoints, to which you can issue POST, GET, PATCH and DELETE methods.
+You get a `MyData` MongoDB collection, a `/MyData` RESTful endpoint, to which you can issue POST, GET, PATCH and DELETE methods to create, retrieve, update or delete documents.
 
 ## The Goodies
 
