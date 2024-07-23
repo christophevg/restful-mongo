@@ -41,7 +41,7 @@ class RestfulMongo():
   Given a dataclass, it exposes a collection of documents using Flask Restful
   Resources according to that dataclass.
   """
-  def __init__(self, server, client=None):
+  def __init__(self, server, client=None, prefix=None):
     self._server = server
     self._server.logger.setLevel(LOG_LEVEL)
     self._api = flask_restful.Api(self._server)
@@ -66,6 +66,8 @@ class RestfulMongo():
     if client is None:
       client = MongoClient()
     self._client = client
+    
+    self._prefix = prefix if prefix[0] == "/" else f"/{prefix}"
 
     # a dictionary of RestfulMongo collections
     self._collections = {}
@@ -94,9 +96,9 @@ class RestfulMongo():
       def patch(this, resource, id=None, path=None):
         pass
 
-    self._api.add_resource(RestfulResource, "/<string:resource>s",                        endpoint="resources")
-    self._api.add_resource(RestfulResource, "/<string:resource>/<string:id>",             endpoint="resource")
-    self._api.add_resource(RestfulResource, "/<string:resource>/<string:id>/<path:path>", endpoint="resource-path")
+    self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>s",                        endpoint="resources")
+    self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>/<string:id>",             endpoint="resource")
+    self._api.add_resource(RestfulResource, f"{self._prefix}/<string:resource>/<string:id>/<path:path>", endpoint="resource-path")
 
   def expose(self, cls):
     collection = DataClassCollection(cls, self._client)
