@@ -28,9 +28,9 @@ class DataClassCollection():
       except (TypeError, KeyError):
         pass
 
-  def insert_one(self, obj):
-    self.logger.info(f"insert {self.name}: {obj}")
-    data = dataclasses.asdict(obj)
+  def insert_one(self, doc):
+    self.logger.info(f"insert {self.name}: doc")
+    data = dataclasses.asdict(doc)
     if "_id" in data and data["_id"] is None:
       data.pop("_id")
     self.collection.insert_one(data)
