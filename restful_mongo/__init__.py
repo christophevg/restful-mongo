@@ -137,7 +137,7 @@ class RestfulResource(flask_restful.Resource):
       raise ValueError("can't apply path when deleting")
     if id is None:
       raise ValueError("deleting requires and identified resource")
-    self.logger.info(f"DELETE {resource}: {id}")
+    self.logger.info(f"DELETE {resource}/{id}")
     self.mongo[resource].delete_one(id)
 
   def put(self, resource, id=None, path=None):
