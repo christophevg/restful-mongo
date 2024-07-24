@@ -130,7 +130,7 @@ class RestfulResource(flask_restful.Resource):
     self.logger.info(f"POST {resource}: {data}")
     doc = self.mongo[resource].dataclass(**data)
     self.mongo[resource].insert_one(doc)
-    return doc.asdict()
+    return dataclasses.asdict(doc)
 
   def delete(self, resource, id=None, path=None):
     if path:
