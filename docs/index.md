@@ -18,7 +18,6 @@
 whats-in-the-box.md
 getting-started.md
 contributing.md
-code.md
 ```
 
 

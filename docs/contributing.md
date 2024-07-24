@@ -6,5 +6,5 @@ This project is hosted on [GitHub](https://github.com/christophevg/restful-mongo
 
 * Do use the [issues tracker](https://github.com/christophevg/restful-mongo/issues).
 * Let's discuss any proposed change or fix in an issue, so your work is not done in vain - I hate to reject pull requests...
-* Create [pull requests](https://github.com/christophevg/restful-mongo/pulls) against `next` branch.
+* Create [pull requests](https://github.com/christophevg/restful-mongo/pulls) against the `master` branch.
 * Try to keep pull requests "atomic", and if possible related to an issue.
