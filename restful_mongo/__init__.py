@@ -13,7 +13,10 @@ load_dotenv()
 load_dotenv(".env.local")
 
 import os
+import logging
 LOG_LEVEL = os.environ.get("LOG_LEVEL") or "DEBUG"
+FORMAT  = "[%(asctime)s] [%(process)d] [%(levelname)s] %(message)s"
+DATEFMT = "%Y-%m-%d %H:%M:%S %z"
 
 import dataclasses
 from dataclasses import dataclass
@@ -41,6 +44,7 @@ class RestfulMongo():
   def __init__(self, server, client=None, prefix=None):
     self.server = server
     self.server.logger.setLevel(LOG_LEVEL)
+    self.server.logger.handlers[0].setFormatter(logging.Formatter(FORMAT, DATEFMT))
     self.server.config['RESTFUL_JSON'] =  {
       "indent" : 2,
       "cls"    : CustomEncoder
