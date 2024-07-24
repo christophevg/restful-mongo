@@ -4,4 +4,5 @@ pymongo
 eventlet
 python-dotenv
 pageable-mongo
+mongomock
 

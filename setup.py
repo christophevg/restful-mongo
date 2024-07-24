@@ -24,6 +24,7 @@ INSTALL_REQUIRES = [
   "eventlet",
   "python-dotenv",
   "pageable-mongo",
+  "mongomock",
   
 ]
 ENTRY_POINTS = {

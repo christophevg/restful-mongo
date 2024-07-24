@@ -44,7 +44,10 @@ class RestfulMongo():
   def __init__(self, server, client=None, prefix=None):
     self.server = server
     self.server.logger.setLevel(LOG_LEVEL)
-    self.server.logger.handlers[0].setFormatter(logging.Formatter(FORMAT, DATEFMT))
+    try:
+      self.server.logger.handlers[0].setFormatter(logging.Formatter(FORMAT, DATEFMT))
+    except IndexError:
+      pass
     self.server.config['RESTFUL_JSON'] =  {
       "indent" : 2,
       "cls"    : CustomEncoder

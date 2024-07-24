@@ -1,16 +1,10 @@
 from dataclasses import dataclass, field
 from typing import List
 
-# quick 'n dirty in-memory mongoclient to avoid having to set up one
-import os
-
-if os.environ.get("USE_REAL_MONGO", False):
-  print("⚠️ using real MongoDB client")
-  from pymongo import MongoClient
-else:
-  from .fakemongo import MongoClient
+from mongomock import MongoClient
 
 from flask import Flask
+
 from restful_mongo import RestfulMongo, RestfulDocument
 
 # one dataclass to rule them all
