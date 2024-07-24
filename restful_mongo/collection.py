@@ -30,8 +30,10 @@ class DataClassCollection():
 
   def insert_one(self, obj):
     self.logger.info(f"insert {self.name}: {obj}")
-    doc = dataclasses.asdict(obj)
-    self.collection.insert_one(doc)
+    data = dataclasses.asdict(obj)
+    if "_id" in data and data["_id"] is None:
+      data.pop("_id")
+    self.collection.insert_one(data)
 
   def find_one(self, filters):
     self.logger.debug(f"find one {self.name}: {filters}")

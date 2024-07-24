@@ -27,6 +27,7 @@ from bson.objectid import ObjectId
 import json
 from datetime import datetime
 
+from flask import request
 import flask_restful
 
 from restful_mongo.collection import DataClassCollection
@@ -119,7 +120,17 @@ class RestfulResource(flask_restful.Resource):
     return None
   
   def post(self, resource, id=None, path=None):
-    pass
+    if path:
+      raise ValueError("can't apply path when posting")
+    if id:
+      raise ValueError("can't post to identified resource")
+    data = request.json
+    if "_id" not in data:
+      data["_id"] = None
+    self.logger.info(f"POST {resource}: {data}")
+    doc = self.mongo[resource].dataclass(**data)
+    self.mongo[resource].insert_one(doc)
+    return doc.asdict()
 
   def put(self, resource, id=None, path=None):
     pass
