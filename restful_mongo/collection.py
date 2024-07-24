@@ -1,10 +1,9 @@
 import logging
 
 import dataclasses
+from dataclasses import fields
 
 from pageable_mongo import Pageable
-
-logger = logging.getLogger(__name__)
 
 class DataClassCollection():
   """
@@ -12,30 +11,50 @@ class DataClassCollection():
   A Mongo Collection lookalike, with a DataClass-based interface.
   
   """
-  def __init__(self, dataclass, client):
-    self.dataclass   = dataclass
-    self._client     = client
-    self._name       = dataclass.__name__
-    self._collection = self._client[self._name]
+  def __init__(self, dataclass, client, logger=None):
+    self.dataclass  = dataclass
+    self.client     = client
+    self.logger     = logger if logger else logging.getLogger(__name__)
+    
+    self.name       = dataclass.__name__
+    self.collection = self.client[self.name]
+    self.id         = "_id"
+    # detect any custom id fields
+    for field in fields(self.dataclass):
+      try:
+        if field.metadata["id"] is True:
+          self.logger.debug(f"using identifier '{field.name}' for {self.name}")
+          self.id = field.name
+      except (TypeError, KeyError):
+        pass
 
   def insert_one(self, obj):
+    self.logger.info(f"insert {self.name}: {obj}")
     doc = dataclasses.asdict(obj)
-    self._collection.insert_one(doc)
+    self.collection.insert_one(doc)
 
   def find_one(self, filters):
-    doc = self._collection.find_one(filters)
+    self.logger.debug(f"find one {self.name}: {filters}")
+    doc = self.collection.find_one(filters)
     if doc:
       return self.dataclass(**doc)
-    else:
-      return None
+    return None
+
+  def find(self, filters):
+    self.logger.debug(f"find {self.name}: {filters}")
+    docs = self.collection.find(filters)
+    if docs:
+      return [ self.dataclass(**doc) for doc in docs ]
+    return None
 
   def update_one(self, id, **kwargs):
-    logger.info(f"update {self.name} : {kwargs}")
-    self.collection.update_one({"id" : id}, { "$set" : self.dataclass.sanitize(kwargs) })
+    self.logger.debug(f"update {self.name}: {kwargs}")
+    updates = self.dataclass.sanitize(kwargs)
+    self.collection.update_one({"id" : id}, { "$set" : updates })
 
   def delete_one(self, id):
-    logger.info(f"delete {self.name}: {id}")
-    self._collection.delete_one({"id" : id})
+    self.logger.debug(f"delete {self.name}: {id}")
+    self.collection.delete_one({"id" : id})
 
 class PageableDataClassCollection(DataClassCollection):
   """
@@ -44,9 +63,9 @@ class PageableDataClassCollection(DataClassCollection):
   find implementation.
   
   """
-  def __init__(self, *args):
-    super().__init__(*args)
-    self._pageable_collection = Pageable(self._client)[self.name]
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.pageablecollection = Pageable(self.client)[self.name]
 
   def find(self, sort=None, order=None, start=0, limit=25, more_filters=None, **kwargs):
     filters = {
@@ -56,21 +75,21 @@ class PageableDataClassCollection(DataClassCollection):
     if more_filters:
       filters.update(more_filters)
     
-    self._pageable_collection.find(filters, { "_id": False })
+    self.pageablecollection.find(filters, { "_id": False })
 
     # add sorting
     if sort:
-      self._pageable_collection.sort( sort, -1 if order == "desc" else 1)
+      self.pageablecollection.sort( sort, -1 if order == "desc" else 1)
 
     # add paging
-    self._pageable_collection.skip(int(start))
-    self._pageable_collection.limit(int(limit))
+    self.pageablecollection.skip(int(start))
+    self.pageablecollection.limit(int(limit))
 
     results = { 
-      "content"       : list(self._pageable_collection),
-      "totalElements" : len(self._pageable_collection),
-      "pageable"      : self._pageable_collection.pageable
+      "content"       : list(self.pageablecollection),
+      "totalElements" : len(self.pageablecollection),
+      "pageable"      : self.pageablecollection.pageable
     }
     
-    logger.info(f"find {self.name} : {kwargs} = {len(self._pageable_collection)} results")
+    self.logger.info(f"find {self.name} : {kwargs} = {len(self.pageablecollection)} results")
     return results

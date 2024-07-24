@@ -21,7 +21,7 @@ from restful_mongo import RestfulMongo, RestfulDocument
 # one dataclass to rule them all
 @dataclass
 class MyData(RestfulDocument):
-  id: int
+  id: int = field(metadata={"id": True})
   name: str
   others: List["MyData"] = field(default_factory=list)
 

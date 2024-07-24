@@ -16,11 +16,11 @@ from restful_mongo import RestfulMongo, RestfulDocument
 # one dataclass to rule them all
 @dataclass
 class MyData(RestfulDocument):
-  id: int
+  id: int = field(metadata={"id": True})
   name: str
   others: List["MyData"] = field(default_factory=list)
 
-# prepare a mongo collection
+# prepare a raw Mongo collection
 client = MongoClient()["hello"]
 for doc in [
   { "id" : "0", "name" : "zero", "others" : []     },

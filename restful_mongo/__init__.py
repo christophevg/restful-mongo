@@ -12,9 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 load_dotenv(".env.local")
 
-# setup logging to stdout
 import os
-
 LOG_LEVEL = os.environ.get("LOG_LEVEL") or "DEBUG"
 
 import dataclasses
@@ -41,41 +39,28 @@ class RestfulMongo():
   Resources according to that dataclass.
   """
   def __init__(self, server, client=None, prefix=None):
-    self._server = server
-    self._server.logger.setLevel(LOG_LEVEL)
-    self._api = flask_restful.Api(self._server)
-
-    class Encoder(json.JSONEncoder):
-      def default(self, o):
-        if hasattr(o, "to_json"):
-          return o.to_json()
-        if isinstance(o, datetime):
-          return o.isoformat()
-        if isinstance(o, set):
-          return list(o)
-        if isinstance(o, ObjectId):
-          return str(o)
-        return super().default(o)
-
-    self._server.config['RESTFUL_JSON'] =  {
+    self.server = server
+    self.server.logger.setLevel(LOG_LEVEL)
+    self.server.config['RESTFUL_JSON'] =  {
       "indent" : 2,
-      "cls"    : Encoder
+      "cls"    : CustomEncoder
     }
+    self.api = flask_restful.Api(self.server)
 
     if client is None:
       client = MongoClient()
-    self._client = client
+    self.client = client
     
     if prefix:
       if prefix[0] != "/":
         prefix = f"/{prefix}"
-      self._server.logger.info(f"🚏 using prefix: {prefix}")
+      self.server.logger.info(f"🚏 using prefix: {prefix}")
     else:
       prefix = ""
-    self._prefix = prefix
+    self.prefix = prefix
 
     # a dictionary of RestfulMongo collections
-    self._collections = {}
+    self.collections = {}
     
     # generic api mapping first path element to the corresponding resource
     # optional second to a document identifier
@@ -85,31 +70,32 @@ class RestfulMongo():
       "resource"      : "/<string:id>",
       "resource-path" : "/<string:id>/<path:path>"
     }.items():
-      self._api.add_resource(
+      self.api.add_resource(
         RestfulResource,
-        f"/<string:resource>{self._prefix}{path}",
+        f"/<string:resource>{self.prefix}{path}",
         endpoint=endpoint,
-        resource_class_kwargs={ "restful_mongo": self }
+        resource_class_kwargs={ "mongo": self }
       )
 
+  def __getitem__(self, name):
+    return self.collections[name]
+
   def expose(self, cls):
-    collection = DataClassCollection(cls, self._client)
-    self._collections[collection._name] = collection
+    collection = DataClassCollection(cls, self.client, logger=self.server.logger)
+    self.collections[collection.name] = collection
 
 class RestfulResource(flask_restful.Resource):
   """
 
-  a RESTful Resource is a generic Resource handling
+  a RESTful Resource is a generic Resource handling class that handles access
+  to Mongo collections according to conventions
   
   """
-  def __init__(self, restful_mongo, *args, **kwargs):
+  def __init__(self, mongo, logger=None, *args, **kwargs):
     super().__init__(*args, **kwargs)
-    self._restful_mongo = restful_mongo
+    self.mongo  = mongo
+    self.logger = logger if logger else self.mongo.server.logger
 
-  @property
-  def logger(self):
-    return self._restful_mongo._server.logger
-  
   def get(self, resource, id=None, path=None):
     self.logger.info(f"GET {resource}/{id}")
     
@@ -119,7 +105,8 @@ class RestfulResource(flask_restful.Resource):
     # TODO: exception handling
     # TODO: validation,...
     
-    obj = self._restful_mongo._collections[resource].find_one({"id" : id})
+    id_name = self.mongo[resource].id
+    obj = self.mongo[resource].find_one({id_name : id})
     if obj:
       return dataclasses.asdict(obj)
     return None
@@ -132,3 +119,18 @@ class RestfulResource(flask_restful.Resource):
 
   def patch(self, resource, id=None, path=None):
     pass
+    
+  def delete(self, resource, id=None, path=None):
+    pass
+
+class CustomEncoder(json.JSONEncoder):
+  def default(self, o):
+    if hasattr(o, "to_json"):
+      return o.to_json()
+    if isinstance(o, datetime):
+      return o.isoformat()
+    if isinstance(o, set):
+      return list(o)
+    if isinstance(o, ObjectId):
+      return str(o)
+    return super().default(o)
