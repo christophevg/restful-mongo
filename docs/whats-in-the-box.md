@@ -1,10 +1,12 @@
 # What's in The Box?
 
+RESTful Mongo is my next attempt at creating another piece in my ever growing personal ultra-fast prototyping stack. I need my stack to enable me to have a prototype up and running in no time, so I try to carve some conventions in framework stone.
+
+Given that MongoDB has been my preferred data storage component, Python the only imaginable development language and web technologies a good standard for interactivity, I try to encapsulate all of them in a single, highly convention-driven solution to create a micro-UI concept, completely driven by `dataclasses`.
+
 ## The Core
 
-RESTful Mongo is a convention driven framework that enables setting up a complete backend to frontend data-oriented stack given dataclasses.
-
-Given...
+At the core, RESTful Mongo enables exposing documents from a MongoDB collection, defined by a dataclass, through a RESTful API:
 
 ```python
 from dataclasses import dataclass, field
@@ -13,23 +15,18 @@ from typing import List
 from flask import Flask
 from restful_mongo import RestfulMongo, RestfulDocument
 
-from pymongo import MongoClient
-
 @dataclass
 class MyData(RestfulDocument):
-  id: int
+  id: int = field(metadata={"id": True})
   name: str
   others: List["MyData"] = field(default_factory=list)
 
-client = MongoClient()
-
 app = Flask(__name__)
-
-api = RestfulMongo(server, client=client)
+api = RestfulMongo(app)
 api.expose(MyData)
 ```
 
-You get a `MyData` MongoDB collection, a `/MyData` RESTful endpoint, to which you can issue POST, GET, PATCH and DELETE methods to create, retrieve, update or delete documents.
+The code above give you a `MyData` MongoDB collection and a `/MyData` RESTful endpoint, to which you can issue POST, GET, PATCH and DELETE methods to create, retrieve, update or delete documents.
 
 ## The Goodies
 
