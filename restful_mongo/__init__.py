@@ -153,7 +153,14 @@ class RestfulResource(flask_restful.Resource):
     self.mongo[resource].replace_one(doc)
 
   def patch(self, resource, id=None, path=None):
-    pass
+    if path:
+      raise ValueError("can't apply path when patching")
+    updates = request.json
+    self.logger.info(f"PUT {resource}/{id}: {updates}")
+    doc = self.mongo[resource].update_one(id, updates)
+    data = dataclasses.asdict(doc)
+    data.pop("_id", None)
+    return data
     
 class CustomEncoder(json.JSONEncoder):
   def default(self, o):

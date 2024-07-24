@@ -3,6 +3,8 @@ import logging
 import dataclasses
 from dataclasses import fields
 
+from pymongo import ReturnDocument
+
 from pageable_mongo import Pageable
 
 class DataClassCollection():
@@ -49,14 +51,25 @@ class DataClassCollection():
       return [ self.dataclass(**doc) for doc in docs ]
     return None
 
-  def update_one(self, id, **kwargs):
-    self.logger.debug(f"update {self.name}: {kwargs}")
-    updates = self.dataclass.sanitize(kwargs)
-    self.collection.update_one({"id" : id}, { "$set" : updates })
   def replace_one(self, doc):
     self.logger.debug(f"replace {self.name}: {doc}")
     data = dataclasses.asdict(doc)
     self.collection.replace_one({self.id : data[self.id]}, data)
+
+  def update_one(self, id, updates):
+    self.logger.debug(f"update {self.name}: {updates}")
+    # sanitize, only allowing "known" fields
+    updates = {
+      k : v for k, v in updates.items()
+      if k in self.dataclass.__dict__["__dataclass_fields__"]
+    }
+    updates.pop(self.id, None)
+    result = self.collection.find_one_and_update(
+      { self.id : id },
+      { "$set" : updates },
+      return_document=ReturnDocument.AFTER
+    )
+    return self.dataclass(**result)
 
   def delete_one(self, id):
     self.logger.debug(f"delete {self.name}: {id}")
