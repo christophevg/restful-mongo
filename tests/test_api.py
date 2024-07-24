@@ -14,7 +14,7 @@ def test_simple_get(make_api):
     { "id" : "2", "name" : "two"  }
   ])
 
-  response = api.get("/MyData/1")
+  response = api.server.test_client().get("/MyData/1")
   assert response.json
   assert response.json["id"]   == "1"
   assert response.json["name"] == "one"

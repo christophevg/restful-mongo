@@ -12,18 +12,19 @@ def app():
 
 @pytest.fixture()
 def make_db():
-  def factory(name, documents):
+  def factory(name, documents=None):
     db = mongomock.MongoClient().db
     collection = db[name]
-    collection.insert_many(documents)
+    if documents is not None:
+      collection.insert_many(documents)
     return db
   return factory
 
 @pytest.fixture()
 def make_api(app, make_db):
-  def factory(cls, documents):
+  def factory(cls, documents=None):
     db = make_db(cls.__name__, documents)
-    rest = RestfulMongo(app, client=db)
-    rest.expose(cls)
-    return app.test_client()
+    api = RestfulMongo(app, client=db)
+    api.expose(cls)
+    return api
   return factory
