@@ -56,7 +56,7 @@ class DataClassCollection():
 
   def delete_one(self, id):
     self.logger.debug(f"delete {self.name}: {id}")
-    self.collection.delete_one({"id" : id})
+    self.collection.delete_one({self.id : id})
 
 class PageableDataClassCollection(DataClassCollection):
   """

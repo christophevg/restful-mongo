@@ -132,15 +132,20 @@ class RestfulResource(flask_restful.Resource):
     self.mongo[resource].insert_one(doc)
     return doc.asdict()
 
+  def delete(self, resource, id=None, path=None):
+    if path:
+      raise ValueError("can't apply path when deleting")
+    if id is None:
+      raise ValueError("deleting requires and identified resource")
+    self.logger.info(f"DELETE {resource}: {id}")
+    self.mongo[resource].delete_one(id)
+
   def put(self, resource, id=None, path=None):
     pass
 
   def patch(self, resource, id=None, path=None):
     pass
     
-  def delete(self, resource, id=None, path=None):
-    pass
-
 class CustomEncoder(json.JSONEncoder):
   def default(self, o):
     if hasattr(o, "to_json"):
