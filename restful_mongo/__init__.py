@@ -141,7 +141,16 @@ class RestfulResource(flask_restful.Resource):
     self.mongo[resource].delete_one(id)
 
   def put(self, resource, id=None, path=None):
-    pass
+    if path:
+      raise ValueError("can't apply path when posting")
+    data = request.json
+    if data[self.mongo[resource].id] != id:
+      raise ValueError("document id and resource identifier don't match")
+    self.logger.info(f"PUT {resource}/{id}: {data}")
+    if "_id" not in data:
+      data["_id"] = None
+    doc = self.mongo[resource].dataclass(**data)
+    self.mongo[resource].replace_one(doc)
 
   def patch(self, resource, id=None, path=None):
     pass

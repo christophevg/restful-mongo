@@ -53,6 +53,10 @@ class DataClassCollection():
     self.logger.debug(f"update {self.name}: {kwargs}")
     updates = self.dataclass.sanitize(kwargs)
     self.collection.update_one({"id" : id}, { "$set" : updates })
+  def replace_one(self, doc):
+    self.logger.debug(f"replace {self.name}: {doc}")
+    data = dataclasses.asdict(doc)
+    self.collection.replace_one({self.id : data[self.id]}, data)
 
   def delete_one(self, id):
     self.logger.debug(f"delete {self.name}: {id}")
