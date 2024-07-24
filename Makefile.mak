@@ -1,13 +1,13 @@
 example: example-server example-client
 
-example-server: env-run
-	@echo "🏃‍➡️ $(BLUE)running example server...$(NC)"
-	gunicorn -k eventlet -w 1 example.hello:server
-
 define show_and_run
 	@echo "$(GREEN)$(1)$(NC)"
 	@$(1)
 endef
+
+example-server: env-run
+	@echo "🏃‍➡️ $(BLUE)running example server...$(NC)"
+	$(call show_and_run,gunicorn -k eventlet -w 1 example.hello:server)
 
 define fetch
 	$(eval $@_CMD = curl -s http://localhost:8000/$(1)/$(2) | python -m json.tool)
