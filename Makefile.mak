@@ -5,16 +5,20 @@ example-server: env-run
 	gunicorn -k eventlet -w 1 example.hello:server
 
 define show_and_run
-	$(eval $@_CMD = "$(1)")
-	@echo "$(GREEN)${$@_CMD}$(NC)"
-	@$(shell echo $(1))
+	@echo "$(GREEN)$(1)$(NC)"
+	@$(1)
+endef
+
+define fetch
+	$(eval $@_CMD = curl -s http://localhost:8000/$(1)/$(2) | python -m json.tool)
+	$(call show_and_run,${$@_CMD})
 endef
 
 example-client: env-run
 	@echo "🏃‍➡️ $(BLUE)waiting a second for example server to boot...$(NC)"
 	@sleep 1
 	@echo "🏃‍➡️ $(BLUE)executing a few queries...$(NC)"
-	$(call show_and_run,"curl -s http://localhost:8000/MyData/1 | python -m json.tool")
-	$(call show_and_run,"curl -s http://localhost:8000/MyData/2 | python -m json.tool")
-	$(call show_and_run,"curl -s http://localhost:8000/MyData/3 | python -m json.tool")
+	$(call fetch,MyData,1)
+	$(call fetch,MyData,2)
+	$(call fetch,MyData,3)
 	@echo "🏃‍➡️ $(BLUE)all done, use ctrl+c to terminate this example session$(NC)"
