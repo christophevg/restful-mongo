@@ -28,7 +28,7 @@ from bson.objectid import ObjectId
 import json
 from datetime import datetime
 
-from flask import request
+from flask import request, abort
 import flask_restful
 
 from restful_mongo.collection import DataClassCollection
@@ -45,6 +45,11 @@ class RestfulMongo():
   """
   def __init__(self, server, client=None, prefix=None):
     self.server = server
+    
+    @self.server.errorhandler(400)
+    def bad_request(e):
+      return {"error": str(e) }, 400
+    
     self.server.logger.setLevel(LOG_LEVEL)
     try:
       self.server.logger.handlers[0].setFormatter(logging.Formatter(FORMAT, DATEFMT))
@@ -123,9 +128,9 @@ class RestfulResource(flask_restful.Resource):
   
   def post(self, resource, id=None, path=None):
     if path:
-      raise ValueError("can't apply path when posting")
+      abort(400, "can't apply path when posting")
     if id:
-      raise ValueError("can't post to identified resource")
+      abort(400, "can't post to identified resource")
     data = request.json
     if "_id" not in data:
       data["_id"] = None
@@ -136,20 +141,22 @@ class RestfulResource(flask_restful.Resource):
 
   def delete(self, resource, id=None, path=None):
     if path:
-      raise ValueError("can't apply path when deleting")
+      abort(400, "can't apply path when deleting")
     if id is None:
-      raise ValueError("deleting requires and identified resource")
+      abort(400, "deleting requires an identified resource")
     id = self.apply_type(resource, id)
     self.logger.info(f"DELETE {resource}/{id}")
     self.mongo[resource].delete_one(id)
 
   def put(self, resource, id=None, path=None):
     if path:
-      raise ValueError("can't apply path when posting")
+      abort(400, "can't apply path when posting")
+    if id is None:
+      abort(400, "putting requires an identified resource")    
     id = self.apply_type(resource, id)
     data = request.json
     if data[self.mongo[resource].id] != id:
-      raise ValueError("document id and resource identifier don't match")
+      abort(400, "document id and resource identifier don't match")
     self.logger.info(f"PUT {resource}/{id}: {data}")
     if "_id" not in data:
       data["_id"] = None
@@ -158,7 +165,9 @@ class RestfulResource(flask_restful.Resource):
 
   def patch(self, resource, id=None, path=None):
     if path:
-      raise ValueError("can't apply path when patching")
+      abort(400, "can't apply path when patching")
+    if id is None:
+      abort(400, "patching requires an identified resource")    
     id = self.apply_type(resource, id)
     updates = request.json
     self.logger.info(f"PUT {resource}/{id}: {updates}")

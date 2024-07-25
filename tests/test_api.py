@@ -93,3 +93,15 @@ def test_simple_patch(make_api):
     { "id" : 1, "name" : "ONE"  },
     { "id" : 2, "name" : "two"  }
   ]
+
+def test_invalid_post_with_id(make_api):
+  @dataclass
+  class MyData(RestfulDocument):
+    id: int = field(metadata={"id": True})
+    name: str
+
+  api = make_api(MyData)
+
+  doc = { "id" : 0, "name" : "zero" }
+  response = api.server.test_client().post("/MyData/0", json=doc)
+  assert response.status_code == 400
