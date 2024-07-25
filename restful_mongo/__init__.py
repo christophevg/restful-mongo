@@ -124,7 +124,7 @@ class RestfulResource(flask_restful.Resource):
     obj = self.mongo[resource].find_one({id_name : id})
     if obj:
       return dataclasses.asdict(obj)
-    return None
+    abort(404)
   
   def post(self, resource, id=None, path=None):
     if path:

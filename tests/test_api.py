@@ -16,7 +16,6 @@ def test_simple_get(make_api):
 
   response = api.server.test_client().get("/MyData/1")
   assert response.json
-  print(response.json)
   assert response.json["id"]   == 1
   assert response.json["name"] == "one"
 
@@ -105,3 +104,14 @@ def test_invalid_post_with_id(make_api):
   doc = { "id" : 0, "name" : "zero" }
   response = api.server.test_client().post("/MyData/0", json=doc)
   assert response.status_code == 400
+
+def test_get_404(make_api):
+  @dataclass
+  class MyData(RestfulDocument):
+    id: int = field(metadata={"id": True})
+    name: str
+
+  api = make_api(MyData)
+
+  response = api.server.test_client().get("/MyData/1")
+  assert response.status_code == 404

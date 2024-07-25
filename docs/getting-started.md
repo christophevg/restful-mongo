@@ -81,6 +81,8 @@ curl -s http://localhost:8000/MyData/2 | python -m json.tool
 curl -s http://localhost:8000/MyData/3 | python -m json.tool
 [2024-07-24 13:26:29 +0200] [48736] [INFO] GET MyData/3
 [2024-07-24 13:26:29 +0200] [48736] [DEBUG] find one MyData: {'id': '3'}
-null
+{
+    "message": "The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again."
+}
 🏃‍➡️ all done, use ctrl+c to terminate this example session
 ```
