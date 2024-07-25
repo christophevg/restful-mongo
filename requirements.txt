@@ -5,4 +5,5 @@ eventlet
 python-dotenv
 pageable-mongo
 mongomock
+pydantic
 

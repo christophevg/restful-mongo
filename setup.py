@@ -25,6 +25,7 @@ INSTALL_REQUIRES = [
   "python-dotenv",
   "pageable-mongo",
   "mongomock",
+  "pydantic",
   
 ]
 ENTRY_POINTS = {

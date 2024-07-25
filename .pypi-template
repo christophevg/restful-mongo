@@ -23,6 +23,7 @@ requires:
 - python-dotenv
 - pageable-mongo
 - mongomock
+- pydantic
 scripts: []
 skip:
 - (package_module_name)

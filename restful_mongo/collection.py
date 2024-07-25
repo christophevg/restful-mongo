@@ -3,6 +3,8 @@ import logging
 import dataclasses
 from dataclasses import fields
 
+from pydantic.dataclasses import dataclass as pydantic_dataclass
+
 from pymongo import ReturnDocument
 
 from pageable_mongo import Pageable
@@ -14,19 +16,28 @@ class DataClassCollection():
   
   """
   def __init__(self, dataclass, client, logger=None):
-    self.dataclass  = dataclass
+    self.dataclass  = pydantic_dataclass(dataclass)
+    # self.dataclass  = dataclass
     self.client     = client
     self.logger     = logger if logger else logging.getLogger(__name__)
     
     self.name       = dataclass.__name__
     self.collection = self.client[self.name]
     self.id         = "_id"
-    # detect any custom id fields
+
+    self.id_field   = None
+    self.fields     = {}
+
+    # detect any custom id fields and prepare info dict about fields
     for field in fields(self.dataclass):
+      self.fields[field.name] = field
       try:
         if field.metadata["id"] is True:
           self.logger.debug(f"using identifier '{field.name}' for {self.name}")
           self.id = field.name
+          self.id_field = field
+        elif field.name == "_id" and not self.id_field:
+          self.id_field = field
       except (TypeError, KeyError):
         pass
 
@@ -41,6 +52,7 @@ class DataClassCollection():
     self.logger.debug(f"find one {self.name}: {filters}")
     doc = self.collection.find_one(filters)
     if doc:
+      doc["_id"] = str(doc["_id"])
       return self.dataclass(**doc)
     return None
 
@@ -69,6 +81,7 @@ class DataClassCollection():
       { "$set" : updates },
       return_document=ReturnDocument.AFTER
     )
+    result["_id"] = str(result["_id"])
     return self.dataclass(**result)
 
   def delete_one(self, id):

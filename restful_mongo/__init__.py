@@ -20,6 +20,7 @@ DATEFMT = "%Y-%m-%d %H:%M:%S %z"
 
 import dataclasses
 from dataclasses import dataclass
+from typing import Union
 
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -34,7 +35,7 @@ from restful_mongo.collection import DataClassCollection
 
 @dataclass
 class RestfulDocument:
-  _id : str
+  _id : Union[str,None] # ObjectId causes issues with Pydantic, maybe later
 
 class RestfulMongo():
   """
@@ -114,6 +115,7 @@ class RestfulResource(flask_restful.Resource):
     # TODO: validation,...
     
     id_name = self.mongo[resource].id
+    id = self.apply_type(resource, id)
     obj = self.mongo[resource].find_one({id_name : id})
     if obj:
       return dataclasses.asdict(obj)
@@ -137,12 +139,14 @@ class RestfulResource(flask_restful.Resource):
       raise ValueError("can't apply path when deleting")
     if id is None:
       raise ValueError("deleting requires and identified resource")
+    id = self.apply_type(resource, id)
     self.logger.info(f"DELETE {resource}/{id}")
     self.mongo[resource].delete_one(id)
 
   def put(self, resource, id=None, path=None):
     if path:
       raise ValueError("can't apply path when posting")
+    id = self.apply_type(resource, id)
     data = request.json
     if data[self.mongo[resource].id] != id:
       raise ValueError("document id and resource identifier don't match")
@@ -155,13 +159,18 @@ class RestfulResource(flask_restful.Resource):
   def patch(self, resource, id=None, path=None):
     if path:
       raise ValueError("can't apply path when patching")
+    id = self.apply_type(resource, id)
     updates = request.json
     self.logger.info(f"PUT {resource}/{id}: {updates}")
     doc = self.mongo[resource].update_one(id, updates)
     data = dataclasses.asdict(doc)
     data.pop("_id", None)
     return data
-    
+
+  def apply_type(self, resource, id):
+    id_name = self.mongo[resource].id_field.name
+    return self.mongo[resource].fields[id_name].type(id)
+
 class CustomEncoder(json.JSONEncoder):
   def default(self, o):
     if hasattr(o, "to_json"):

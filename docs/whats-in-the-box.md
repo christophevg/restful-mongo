@@ -19,7 +19,7 @@ from restful_mongo import RestfulMongo, RestfulDocument
 class MyData(RestfulDocument):
   id: int = field(metadata={"id": True})
   name: str
-  others: List["MyData"] = field(default_factory=list)
+  others: List[int] = field(default_factory=list)
 
 app = Flask(__name__)
 api = RestfulMongo(app)
